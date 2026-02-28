@@ -68,13 +68,16 @@ let vehicles = [], records = [], syncing = false;
 let view = SCRIPT_URL ? "loading" : "setup";
 let selVid = null;
 let logRec = null;
-let editVehicle = null;  // vehicle being edited
-let editRecord  = null;  // record being edited
+let editVehicle = null;
+let editRecord  = null;
+let customPresets = {};      // overrides from sheet: { "Pickup": [...], "Boat": [...] }
+let settingsTab = "type";    // "type" | vehicle id
 
 // ── CONSTANTS ───────────────────────────────────────────────
 const VEHICLE_TYPES = ["Pickup","Car","RV","Boat","Tractor","Go-Kart","Trailer","Other"];
 const TRACKING = { Pickup:"miles",Car:"miles",RV:"miles",Boat:"hours",Tractor:"hours","Go-Kart":"hours",Trailer:"date",Other:"ask" };
-const PRESETS = {
+// Default presets — overridden by customPresets if set
+const DEFAULT_PRESETS = {
   Pickup:   ["Oil Change","Tire Rotation","Air Filter","Brake Inspection","Transmission Service","Coolant Flush"],
   Car:      ["Oil Change","Tire Rotation","Air Filter","Brake Inspection","Transmission Service"],
   RV:       ["Oil Change","Generator Service","Roof Seal","Battery Check","Winterize","De-Winterize"],
@@ -84,6 +87,16 @@ const PRESETS = {
   Trailer:  ["Bearing Repack","Brake Check","Tire Inspection","Light Check"],
   Other:    ["Service","Inspection","Oil Change"],
 };
+const PRESETS_KEY = "vmtracker_presets";
+
+function getPresets(typeOrVid) {
+  // Per-vehicle presets take priority, then type presets, then defaults
+  if (customPresets[typeOrVid]?.length) return customPresets[typeOrVid];
+  const v = vehicles.find(x=>x.id===typeOrVid);
+  if (v && customPresets[v.type]?.length) return customPresets[v.type];
+  if (v) return DEFAULT_PRESETS[v.type] || DEFAULT_PRESETS.Other;
+  return customPresets[typeOrVid] || DEFAULT_PRESETS[typeOrVid] || DEFAULT_PRESETS.Other;
+}
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 let rf = { vehicleId:"", triggerType:"Every X Days", customMode:false };
 
@@ -175,6 +188,13 @@ async function loadAll() {
   if (data.error) throw new Error(data.error);
   vehicles = data.vehicles||[];
   records  = data.records||[];
+  // Merge server presets with local
+  if (data.presets && Object.keys(data.presets).length) {
+    customPresets = data.presets;
+    localStorage.setItem(PRESETS_KEY, JSON.stringify(customPresets));
+  } else {
+    customPresets = JSON.parse(localStorage.getItem(PRESETS_KEY)||"{}");
+  }
 }
 
 // ── ROUTER ──────────────────────────────────────────────────
@@ -200,7 +220,8 @@ function render() {
 const VIEWS = {
   loading:rLoading, setup:rSetup, dashboard:rDashboard, vehicles:rVehicles,
   "add-vehicle":rAddVehicle, "edit-vehicle":rEditVehicle,
-  "add-record":rAddRecord, "edit-record":rEditRecord, "vehicle-detail":rDetail,
+  "add-record":rAddRecord, "edit-record":rEditRecord,
+  "vehicle-detail":rDetail, settings:rSettings,
 };
 function render() {
   document.getElementById("app").innerHTML = (VIEWS[view]||rDashboard)();
@@ -211,6 +232,7 @@ function nav(active) {
     <button class="${active==="dashboard"?"active":""}" onclick="go('dashboard')">🏠 Home</button>
     <button class="${active==="add-record"?"active":""}" onclick="go('add-record')">＋ Task</button>
     <button class="${active==="vehicles"?"active":""}" onclick="go('vehicles')">🚗 Fleet</button>
+    <button class="${active==="settings"?"active":""}" onclick="go('settings')">⚙️ Settings</button>
   </nav>`;
 }
 
@@ -497,7 +519,7 @@ function recordForm(rec) {
   const preVid = rec?.vehicleId || rf.vehicleId || selVid || "";
   const sv = vehicles.find(v=>v.id===preVid)||vehicles[0];
   const vOpts = vehicles.map(v=>`<option value="${v.id}" ${v.id===preVid?"selected":""}>${esc(v.name)}</option>`).join("");
-  const taskOpts = sv?(PRESETS[sv.type]||PRESETS.Other).map(t=>`<option ${rec?.task===t?"selected":""}>${t}</option>`).join(""):"";
+  const taskOpts = sv?(getPresets(sv.id)||[]).map(t=>`<option ${(rec?.task||rf.savedTask)===t?"selected":""}>${t}</option>`).join(""):"";
   const tt = rec?.triggerType||rf.triggerType;
   const today = new Date().toISOString().slice(0,10);
   const monthOpts = MONTHS.map((m,i)=>`<option value="${i}" ${String(i)===(rec?.seasonalMonth||"8")?"selected":""}>${m}</option>`).join("");
@@ -567,25 +589,43 @@ function recordForm(rec) {
 }
 
 function onRVehicle(id){rf.vehicleId=id;selVid=id;render();}
-function onTT(v){rf.triggerType=v;render();}
-function rfToggle(c){rf.customMode=c;render();}
+function onTT(v){
+  rf.triggerType=v;
+  // preserve task selection before re-render
+  const t=document.getElementById("rt");
+  if(t) rf.savedTask=t.value;
+  render();
+}
+function rfToggle(c){
+  // preserve task selection before re-render
+  const t=document.getElementById("rt");
+  if(t) rf.savedTask=t.value;
+  rf.customMode=c;
+  render();
+}
 
 function collectRecordForm(existingId, vehicleId) {
   const tt = (document.getElementById("rtt")||{value:"Every X Days"}).value;
   const task = rf.customMode
     ? (document.getElementById("rt-custom")||{value:""}).value.trim()
     : (document.getElementById("rt")||{value:""}).value;
+
+  const isMilesHours = tt==="Miles"||tt==="Hours";
+  const isDays       = tt==="Every X Days";
+  const isSeasonal   = tt==="Seasonal (Month)";
+
   const r = {
-    id: existingId||genId(),
-    vehicleId: vehicleId||(document.getElementById("rv")||{value:""}).value,
-    task, triggerType:tt,
-    intervalDays:   tt==="Every X Days"     ?(document.getElementById("rint")||{value:""}).value:"",
-    seasonalMonth:  tt==="Seasonal (Month)" ?(document.getElementById("rmonth")||{value:"8"}).value:"",
-    lastDate:       tt==="Every X Days"     ?(document.getElementById("rldate")||{value:""}).value:"",
-    lastUsage:      tt==="Miles"||tt==="Hours"?(document.getElementById("rluse")||{value:""}).value:"",
-    usageInterval:  tt==="Miles"||tt==="Hours"?(document.getElementById("ruse-int")||{value:""}).value:"",
-    supplies:(document.getElementById("rsupplies")||{value:""}).value,
-    notes:   (document.getElementById("rnotes")||{value:""}).value,
+    id:            existingId||genId(),
+    vehicleId:     vehicleId||(document.getElementById("rv")||{value:""}).value,
+    task,
+    triggerType:   tt,
+    intervalDays:  isDays       ? (document.getElementById("rint")   ||{value:""}).value : "",
+    seasonalMonth: isSeasonal   ? (document.getElementById("rmonth") ||{value:"8"}).value : "",
+    lastDate:      isDays       ? (document.getElementById("rldate") ||{value:""}).value : "",
+    lastUsage:     isMilesHours ? (document.getElementById("rluse")  ||{value:""}).value : "",
+    usageInterval: isMilesHours ? (document.getElementById("ruse-int")||{value:""}).value : "",
+    supplies:      (document.getElementById("rsupplies")||{value:""}).value,
+    notes:         (document.getElementById("rnotes")   ||{value:""}).value,
   };
   r.nextDueDate  = calcNextDueDate(r);
   r.nextDueUsage = calcNextDueUsage(r);
@@ -624,7 +664,108 @@ async function updateRecord() {
   syncing=false;
 }
 
-// ── VEHICLE DETAIL ──────────────────────────────────────────
+// ── SETTINGS ────────────────────────────────────────────────
+function rSettings() {
+  const typeList = VEHICLE_TYPES;
+  const vehicleList = vehicles;
+
+  // Tab selector
+  const typeTabs = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+    ${typeList.map(t=>`<button onclick="settingsTab='${t}';render()"
+      style="padding:5px 10px;border-radius:99px;border:1.5px solid ${settingsTab===t?'#100299':'#d1d5db'};
+      background:${settingsTab===t?'#100299':'#fff'};color:${settingsTab===t?'#fff':'#374151'};
+      font-size:12px;font-weight:600;cursor:pointer">${t}</button>`).join("")}
+  </div>
+  <div style="height:1px;background:#f0f0f0;margin:8px 0 12px"></div>
+  <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Per Vehicle</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+    ${vehicleList.map(v=>`<button onclick="settingsTab='${v.id}';render()"
+      style="padding:5px 10px;border-radius:99px;border:1.5px solid ${settingsTab===v.id?'#100299':'#d1d5db'};
+      background:${settingsTab===v.id?'#100299':'#fff'};color:${settingsTab===v.id?'#fff':'#374151'};
+      font-size:12px;font-weight:600;cursor:pointer">${esc(v.name)}</button>`).join("")}
+  </div>`;
+
+  // Current preset list for selected tab
+  const isVehicle = vehicles.some(v=>v.id===settingsTab);
+  const scopeLabel = isVehicle
+    ? `<p class="hint" style="margin-bottom:8px">Custom tasks for <b>${esc(vehicles.find(v=>v.id===settingsTab)?.name)}</b> only. Shown in addition to type presets.</p>`
+    : `<p class="hint" style="margin-bottom:8px">Default task list for all <b>${settingsTab}</b> vehicles. Per-vehicle lists override these.</p>`;
+
+  const currentList = customPresets[settingsTab] || (isVehicle ? [] : DEFAULT_PRESETS[settingsTab] || []);
+
+  const items = currentList.map((task,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0">
+      <span style="flex:1;font-size:14px">${esc(task)}</span>
+      <button class="small-btn small-btn-red" onclick="removePresetItem('${settingsTab}',${i})">Remove</button>
+    </div>`).join("");
+
+  return `
+  <div class="header">
+    <div class="header-row"><h1>Settings</h1></div>
+  </div>
+  <div class="section">
+    <div class="section-label">Task Presets</div>
+    <p class="hint" style="margin-bottom:12px">Customize the task dropdown when adding maintenance. Select a vehicle type or a specific vehicle.</p>
+    <div class="card" style="padding:12px">
+      ${typeTabs}
+      ${scopeLabel}
+      ${items || `<p style="color:#9ca3af;font-size:13px;padding:8px 0">${isVehicle?"No custom tasks yet — add one below.":"Using defaults — add items to customize."}</p>`}
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="new-preset" placeholder="New task name…" style="flex:1;margin-top:0"/>
+        <button class="btn btn-primary" style="width:auto;margin-top:0;padding:10px 16px" onclick="addPresetItem('${settingsTab}')">Add</button>
+      </div>
+      ${!isVehicle && customPresets[settingsTab]?.length
+        ? `<button class="btn btn-ghost" style="font-size:12px;margin-top:8px" onclick="resetPresets('${settingsTab}')">Reset to defaults</button>`
+        : ""}
+    </div>
+    <button class="btn btn-primary" id="save-presets-btn" onclick="savePresetsToSheet()" style="margin-top:16px">Save &amp; Sync to Sheet</button>
+    <p class="hint">Presets are also saved locally so they load instantly.</p>
+  </div>
+  ${nav("settings")}`;
+}
+
+function addPresetItem(scope) {
+  const input = document.getElementById("new-preset");
+  const val = (input.value||"").trim();
+  if (!val) return;
+  if (!customPresets[scope]) {
+    // seed with defaults if type scope
+    const isVehicle = vehicles.some(v=>v.id===scope);
+    customPresets[scope] = isVehicle ? [] : [...(DEFAULT_PRESETS[scope]||[])];
+  }
+  if (!customPresets[scope].includes(val)) customPresets[scope].push(val);
+  input.value = "";
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(customPresets));
+  render();
+}
+
+function removePresetItem(scope, idx) {
+  if (!customPresets[scope]) {
+    const isVehicle = vehicles.some(v=>v.id===scope);
+    customPresets[scope] = isVehicle ? [] : [...(DEFAULT_PRESETS[scope]||[])];
+  }
+  customPresets[scope].splice(idx, 1);
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(customPresets));
+  render();
+}
+
+function resetPresets(type) {
+  if (!confirm(`Reset ${type} presets to defaults?`)) return;
+  delete customPresets[type];
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(customPresets));
+  render();
+}
+
+async function savePresetsToSheet() {
+  const btn = document.getElementById("save-presets-btn");
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const res = await api("savePresets", { presets: customPresets });
+    if (res.error) throw new Error(res.error);
+    showToast("Presets saved to sheet!");
+  } catch(e) { showToast("Save failed: "+e.message); }
+  btn.disabled = false; btn.textContent = "Save & Sync to Sheet";
+}
 function rDetail() {
   const v=vehicles.find(x=>x.id===selVid);
   if (!v) return `<div class="section"><p class="empty">Vehicle not found.</p></div>${nav("")}`;
