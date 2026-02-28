@@ -8,7 +8,7 @@
   <title>Vehicle Maintenance Tracker</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    body{font-family:system-ui,-apple-system,sans-serif;background:#f8f9fa;max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:72px}
+    body{font-family:system-ui,-apple-system,sans-serif;background:#f8f9fa;max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:80px}
     .header{background:#100299;color:#fff;padding:16px;position:sticky;top:0;z-index:100}
     .header-row{display:flex;justify-content:space-between;align-items:center}
     .header h1{font-size:20px;font-weight:700}
@@ -216,7 +216,6 @@ function render() {
   }[view]||"rDashboard"])();
 }
 
-// cleaner dispatch
 const VIEWS = {
   loading:rLoading, setup:rSetup, dashboard:rDashboard, vehicles:rVehicles,
   "add-vehicle":rAddVehicle, "edit-vehicle":rEditVehicle,
