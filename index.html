@@ -4,566 +4,270 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
   <meta name="apple-mobile-web-app-title" content="Maintenance"/>
   <title>Vehicle Maintenance Tracker</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     body{font-family:system-ui,-apple-system,sans-serif;background:#f8f9fa;max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:72px}
-    /* Header */
     .header{background:#100299;color:#fff;padding:16px;position:sticky;top:0;z-index:100}
     .header-row{display:flex;justify-content:space-between;align-items:center}
     .header h1{font-size:20px;font-weight:700}
     .header p{font-size:12px;opacity:.8;margin-top:2px}
-    /* Nav */
     .nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7eb;z-index:100;max-width:480px;margin:0 auto}
     .nav button{flex:1;padding:10px 4px 8px;border:none;background:none;font-size:11px;color:#6b7280;cursor:pointer;border-top:2px solid transparent;font-weight:500}
     .nav button.active{color:#100299;border-top-color:#100299;font-weight:700;background:#f0f0ff}
-    /* Cards */
     .section{padding:12px 16px}
     .card{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-    /* Badges */
-    .badge{display:inline-block;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600;color:#fff}
-    .badge-red{background:#dc2626}
-    .badge-yellow{background:#f59e0b}
-    .badge-blue{background:#3b82f6}
-    .badge-green{background:#16a34a}
-    .badge-gray{background:#6b7280}
-    /* Summary boxes */
+    .badge{display:inline-block;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600;color:#fff;white-space:nowrap}
+    .badge-red{background:#dc2626}.badge-yellow{background:#f59e0b}.badge-blue{background:#3b82f6}.badge-green{background:#16a34a}.badge-gray{background:#6b7280}
     .summary-row{display:flex;gap:8px;margin-bottom:4px}
     .summary-box{flex:1;border-radius:10px;padding:12px;text-align:center;color:#fff}
     .summary-box .num{font-size:28px;font-weight:800;line-height:1}
     .summary-box .lbl{font-size:11px;margin-top:2px}
-    /* Buttons */
     .btn{display:block;width:100%;padding:11px 16px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;text-align:center}
-    .btn-primary{background:#100299;color:#fff}
-    .btn-outline{background:#fff;color:#100299;border:1.5px solid #100299}
-    .btn-danger{background:#dc2626;color:#fff}
-    .btn-ghost{background:#f3f4f6;color:#374151}
+    .btn-primary{background:#100299;color:#fff}.btn-outline{background:#fff;color:#100299;border:1.5px solid #100299}.btn-danger{background:#dc2626;color:#fff}.btn-ghost{background:#f3f4f6;color:#374151}
     .btn:disabled{opacity:.5;cursor:not-allowed}
-    .small-btn{background:none;border:1.5px solid currentColor;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer}
-    .small-btn-green{color:#16a34a}
-    .small-btn-blue{color:#100299}
-    .small-btn-red{color:#dc2626}
-    .small-btn-white{color:#fff;border-color:rgba(255,255,255,.5)}
-    /* Forms */
+    .small-btn{background:none;border:1.5px solid currentColor;border-radius:6px;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer}
+    .small-btn-green{color:#16a34a}.small-btn-blue{color:#100299}.small-btn-red{color:#dc2626}.small-btn-white{color:#fff;border-color:rgba(255,255,255,.5)}
     label{display:block;font-size:13px;font-weight:600;color:#374151;margin-top:12px}
-    input,select,textarea{width:100%;border:1.5px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:14px;margin-top:4px;background:#fff;font-family:inherit}
-    /* Misc */
+    input,select{width:100%;border:1.5px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:15px;margin-top:4px;background:#fff;font-family:inherit}
     .task-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
     .task-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
     .task-title{font-weight:700;font-size:15px}
-    .task-meta{font-size:12px;color:#6b7280;margin-top:2px}
+    .task-meta{font-size:12px;color:#6b7280;margin-top:3px}
     .task-notes{font-size:12px;color:#9ca3af;margin-top:2px}
     .section-label{font-weight:700;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
     .empty{color:#9ca3af;text-align:center;margin-top:24px;font-size:14px}
-    .vehicle-row{display:flex;justify-content:space-between;align-items:center}
     .chevron{font-size:20px;color:#9ca3af}
-    .hint{font-size:12px;color:#6b7280;margin-top:4px}
-    /* Toast */
+    .hint{font-size:12px;color:#6b7280;margin-top:4px;line-height:1.5}
     #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;z-index:999;white-space:nowrap;display:none}
-    /* Loading */
-    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    /* Setup screen */
-    .setup-card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-    .setup-steps{font-size:13px;line-height:2;color:#374151}
-    .setup-steps b{color:#100299}
     .error-text{color:#dc2626;font-size:13px;margin-top:8px}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+    .modal{background:#fff;border-radius:16px 16px 0 0;padding:20px 20px 32px;width:100%;max-width:480px}
+    .modal h2{font-size:17px;font-weight:700;margin-bottom:2px}
+    .modal .sub{font-size:13px;color:#6b7280;margin-bottom:4px}
+    .pill{display:inline-block;background:#f0f0ff;color:#100299;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;margin:2px 2px 0 0}
+    .divider{height:1px;background:#f0f0f0;margin:16px 0}
   </style>
 </head>
 <body>
-
 <div id="toast"></div>
-
-<!-- All screens injected here by JS -->
+<div id="modal"></div>
 <div id="app"></div>
-
 <script>
-// ============================================================
-//  CONFIG — paste your Google Apps Script Web App URL below
-// ============================================================
-const SCRIPT_URL_KEY = "vmtracker_url";
-let SCRIPT_URL = localStorage.getItem(SCRIPT_URL_KEY) || "";
+// ── CONFIG ──────────────────────────────────────────────────
+const HARDCODED_URL = ""; // paste your script URL here to skip setup screen
+const URL_KEY = "vmtracker_v3";
+let SCRIPT_URL = HARDCODED_URL || localStorage.getItem(URL_KEY) || "";
 
-// ============================================================
-//  DATA
-// ============================================================
-let vehicles = [];
-let records  = [];
-let syncing  = false;
+// ── STATE ───────────────────────────────────────────────────
+let vehicles = [], records = [], syncing = false;
+let view = SCRIPT_URL ? "loading" : "setup";
+let selVid = null;   // selected vehicle id
+let logRec = null;   // record being logged
 
+// ── CONSTANTS ───────────────────────────────────────────────
 const VEHICLE_TYPES = ["Pickup","Car","RV","Boat","Tractor","Go-Kart","Trailer","Other"];
-const MAINTENANCE_PRESETS = {
+const TRACKING = { Pickup:"miles",Car:"miles",RV:"miles",Boat:"hours",Tractor:"hours","Go-Kart":"hours",Trailer:"date",Other:"ask" };
+const PRESETS = {
   Pickup:   ["Oil Change","Tire Rotation","Air Filter","Brake Inspection","Transmission Service","Coolant Flush"],
   Car:      ["Oil Change","Tire Rotation","Air Filter","Brake Inspection","Transmission Service"],
-  RV:       ["Oil Change","Generator Service","Roof Seal Inspection","Battery Check","Winterize","De-Winterize"],
+  RV:       ["Oil Change","Generator Service","Roof Seal","Battery Check","Winterize","De-Winterize"],
   Boat:     ["Engine Service","Impeller Replacement","Winterize","De-Winterize","Fuel Stabilizer","Battery Check"],
   Tractor:  ["Oil Change","Air Filter","Hydraulic Fluid","Belt Inspection","Blade Sharpen"],
   "Go-Kart":["Oil Change","Chain Lube","Brake Check","Tire Check"],
   Trailer:  ["Bearing Repack","Brake Check","Tire Inspection","Light Check"],
   Other:    ["Service","Inspection","Oil Change"],
 };
-const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const TRIGGER_TYPES = ["Every X Days","Seasonal (Month)","Miles","Hours"];
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-// ============================================================
-//  UTILS
-// ============================================================
-function genId(){ return Math.random().toString(36).slice(2,9); }
+// add-record form state
+let rf = { vehicleId:"", triggerType:"Every X Days", customMode:false };
 
-function daysUntil(dateStr){
-  if(!dateStr) return null;
-  return Math.ceil((new Date(dateStr) - new Date()) / 86400000);
+// ── UTILS ───────────────────────────────────────────────────
+const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+const daysUntil = d => d ? Math.ceil((new Date(d) - new Date()) / 86400000) : null;
+const fmtDate = d => d ? new Date(d).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}) : "—";
+const fNum = n => isNaN(parseFloat(n)) ? "" : parseFloat(n).toLocaleString();
+const unit = tt => tt==="miles"?"mi":tt==="hours"?"hrs":"";
+
+function nextSeasonal(month) {
+  const now = new Date(), t = new Date(now.getFullYear(), parseInt(month), 1);
+  return (t <= now ? new Date(now.getFullYear()+1, parseInt(month), 1) : t).toISOString().slice(0,10);
+}
+function nextDueDate(r) {
+  if (r.triggerType==="Seasonal (Month)") return nextSeasonal(r.seasonalMonth);
+  if (r.triggerType==="Every X Days" && r.intervalDays && r.lastDate) {
+    const d = new Date(r.lastDate); d.setDate(d.getDate()+parseInt(r.intervalDays));
+    return d.toISOString().slice(0,10);
+  }
+  return r.nextDueDate||"";
+}
+function nextDueUsage(r) {
+  if ((r.triggerType==="Miles"||r.triggerType==="Hours") && r.lastUsage && r.usageInterval)
+    return String(parseFloat(r.lastUsage) + parseFloat(r.usageInterval));
+  return r.nextDueUsage||"";
 }
 
-function fmtDate(dateStr){
-  if(!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+function vm() { return Object.fromEntries(vehicles.map(v=>[v.id,v])); }
+
+function estimateDays(r) {
+  const v = vm()[r.vehicleId];
+  if (r.triggerType==="Miles"||r.triggerType==="Hours") {
+    if (!r.nextDueUsage||!v?.avgWeeklyUsage||!v?.currentUsage) return null;
+    const rem = parseFloat(r.nextDueUsage) - parseFloat(v.currentUsage);
+    if (rem <= 0) return -1;
+    return Math.round((rem / parseFloat(v.avgWeeklyUsage)) * 7);
+  }
+  return r.nextDueDate ? daysUntil(r.nextDueDate) : null;
 }
 
-function nextSeasonalDate(month){
-  const now = new Date();
-  let t = new Date(now.getFullYear(), parseInt(month), 1);
-  if(t <= now) t = new Date(now.getFullYear()+1, parseInt(month), 1);
-  return t.toISOString().slice(0,10);
+function dueLabel(r) {
+  if (r.triggerType==="Miles"&&r.nextDueUsage) return `Due at ${fNum(r.nextDueUsage)} mi`;
+  if (r.triggerType==="Hours"&&r.nextDueUsage) return `Due at ${fNum(r.nextDueUsage)} hrs`;
+  if (r.nextDueDate) return fmtDate(r.nextDueDate);
+  return "Not scheduled";
 }
 
-function nextIntervalDate(lastDate, days){
-  if(!lastDate||!days) return null;
-  const d = new Date(lastDate);
-  d.setDate(d.getDate() + parseInt(days));
-  return d.toISOString().slice(0,10);
-}
-
-function computeNextDue(r){
-  if(r.triggerType==="Seasonal (Month)") return nextSeasonalDate(r.seasonalMonth);
-  if(r.triggerType==="Every X Days")     return nextIntervalDate(r.lastDate, r.intervalDays);
-  return r.nextDue || "";
-}
-
-function badgeClass(days){
-  if(days===null) return "badge-gray";
-  if(days<0)      return "badge-red";
-  if(days<=14)    return "badge-yellow";
-  if(days<=30)    return "badge-blue";
+function badgeClass(d) {
+  if (d===null) return "badge-gray";
+  if (d<0||d<=7) return "badge-red";
+  if (d<=14) return "badge-yellow";
+  if (d<=30) return "badge-blue";
   return "badge-green";
 }
-
-function badgeLabel(days){
-  if(days===null) return "Not scheduled";
-  if(days<0)      return `Overdue ${Math.abs(days)}d`;
-  if(days===0)    return "Due today";
-  return `Due in ${days}d`;
+function badgeLabel(d) {
+  if (d===null) return "No schedule";
+  if (d<0) return `Overdue ${Math.abs(d)}d`;
+  if (d===0) return "Due today";
+  return `Due in ${d}d`;
 }
 
-function dueInfo(r){
-  if(r.triggerType==="Miles")
-    return `Due at ${(parseInt(r.lastMiles||0)+parseInt(r.milesInterval||0)).toLocaleString()} mi`;
-  if(r.triggerType==="Hours")
-    return `Due at ${(parseInt(r.lastHours||0)+parseInt(r.hoursInterval||0)).toLocaleString()} hrs`;
-  return r.nextDue ? fmtDate(r.nextDue) : "Not scheduled";
+function sorted(vid=null) {
+  let rs = vid ? records.filter(r=>r.vehicleId===vid) : [...records];
+  return rs.sort((a,b)=>(estimateDays(a)??9999)-(estimateDays(b)??9999));
 }
 
-function gcalUrl(title, date, notes){
-  const d = date.replace(/-/g,"");
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${d}/${d}&details=${encodeURIComponent(notes||"")}`;
+function showToast(msg) {
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.style.display="block";
+  clearTimeout(t._t); t._t=setTimeout(()=>t.style.display="none",3000);
 }
 
-function showToast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.display = "block";
-  clearTimeout(t._timer);
-  t._timer = setTimeout(()=>{ t.style.display="none"; }, 3000);
-}
-
-function sortedRecords(){
-  return [...records].sort((a,b)=>{
-    const da = a.nextDue ? daysUntil(a.nextDue) : 9999;
-    const db = b.nextDue ? daysUntil(b.nextDue) : 9999;
-    return da-db;
+// ── API ─────────────────────────────────────────────────────
+async function api(action, body={}) {
+  if (!SCRIPT_URL) throw new Error("No script URL.");
+  const res = await fetch(SCRIPT_URL+"?action="+action, {
+    method:"POST", body:JSON.stringify({action,...body})
   });
+  const txt = await res.text();
+  try { return JSON.parse(txt); }
+  catch { throw new Error("Bad response: "+txt.slice(0,150)); }
 }
 
-// ============================================================
-//  API
-// ============================================================
-async function api(action, body={}){
-  if(!SCRIPT_URL) throw new Error("No script URL configured.");
-  const res = await fetch(SCRIPT_URL + "?action=" + action, {
-    method: "POST",
-    body: JSON.stringify({action, ...body}),
-  });
-  const text = await res.text();
-  try{ return JSON.parse(text); }
-  catch{ throw new Error("Bad response: " + text.slice(0,120)); }
+async function loadAll() {
+  const res  = await fetch(SCRIPT_URL+"?action=getAll");
+  const data = JSON.parse(await res.text());
+  if (data.error) throw new Error(data.error);
+  vehicles = data.vehicles||[];
+  records  = data.records||[];
 }
 
-async function loadAll(){
-  const res = await fetch(SCRIPT_URL + "?action=getAll");
-  const text = await res.text();
-  const data = JSON.parse(text);
-  if(data.error) throw new Error(data.error);
-  vehicles = data.vehicles || [];
-  records  = data.records  || [];
+// ── ROUTER ──────────────────────────────────────────────────
+function go(v, vid=null) {
+  view=v; if(vid!==null) selVid=vid;
+  closeModal(); render(); window.scrollTo(0,0);
 }
 
-// ============================================================
-//  ROUTER — simple string-based
-// ============================================================
-let currentView = SCRIPT_URL ? "dashboard" : "setup";
-let selectedVehicleId = null;
-
-function navigate(view, vehicleId=null){
-  currentView = view;
-  selectedVehicleId = vehicleId;
-  render();
-  window.scrollTo(0,0);
+// ── RENDER ──────────────────────────────────────────────────
+function render() {
+  const el = document.getElementById("app");
+  el.innerHTML = ({
+    loading:        rLoading,
+    setup:          rSetup,
+    dashboard:      rDashboard,
+    vehicles:       rVehicles,
+    "add-vehicle":  rAddVehicle,
+    "add-record":   rAddRecord,
+    "vehicle-detail":rDetail,
+  }[view]||rDashboard)();
 }
 
-// ============================================================
-//  RENDER
-// ============================================================
-function render(){
-  const app = document.getElementById("app");
-  switch(currentView){
-    case "setup":      app.innerHTML = renderSetup();     break;
-    case "dashboard":  app.innerHTML = renderDashboard(); break;
-    case "vehicles":   app.innerHTML = renderVehicles();  break;
-    case "add-vehicle":app.innerHTML = renderAddVehicle();break;
-    case "add-record": app.innerHTML = renderAddRecord(); break;
-    case "vehicle-detail": app.innerHTML = renderVehicleDetail(); break;
-  }
-  bindEvents();
-}
-
-// ---- NAV ----
-function navHTML(active){
+function nav(active) {
   return `<nav class="nav">
-    <button class="${active==="dashboard"?"active":""}" onclick="navigate('dashboard')">🏠 Dashboard</button>
-    <button class="${active==="add-record"?"active":""}" onclick="navigate('add-record')">＋ Add Task</button>
-    <button class="${active==="vehicles"?"active":""}" onclick="navigate('vehicles')">🚗 Vehicles</button>
+    <button class="${active==="dashboard"?"active":""}" onclick="go('dashboard')">🏠 Home</button>
+    <button class="${active==="add-record"?"active":""}" onclick="go('add-record')">＋ Task</button>
+    <button class="${active==="vehicles"?"active":""}" onclick="go('vehicles')">🚗 Fleet</button>
   </nav>`;
 }
 
-// ---- SETUP ----
-function renderSetup(){
+// ── SCREENS ─────────────────────────────────────────────────
+
+function rLoading() {
+  return `<div class="header"><h1>Maintenance Tracker</h1><p>Loading your data…</p></div>
+  <div class="section" style="text-align:center;margin-top:48px;color:#9ca3af;font-size:14px">Connecting to Google Sheet…</div>`;
+}
+
+function rSetup() {
   return `
-  <div class="header">
-    <h1>Maintenance Tracker</h1>
-    <p>Connect your Google Sheet to get started</p>
-  </div>
+  <div class="header"><h1>Maintenance Tracker</h1><p>One-time setup</p></div>
   <div class="section">
-    <div class="setup-card">
-      <p style="font-weight:700;font-size:16px;margin-bottom:8px">Connect Google Sheet</p>
-      <div class="setup-steps">
-        <b>1.</b> Go to <a href="https://script.google.com" target="_blank" style="color:#100299">script.google.com</a> → New Project<br>
-        <b>2.</b> Paste in the Apps Script code → Save<br>
+    <div class="card">
+      <p style="font-weight:700;font-size:16px;margin-bottom:8px">Connect Your Google Sheet</p>
+      <p style="font-size:13px;color:#6b7280;margin-bottom:12px">Do this once. Your URL is saved in this browser.</p>
+      <div style="font-size:13px;line-height:2.1">
+        <b>1.</b> Open your Google Sheet → Extensions → Apps Script<br>
+        <b>2.</b> Paste the Apps Script code → Save (Ctrl+S)<br>
         <b>3.</b> Deploy → New Deployment → Web app<br>
-        <b>4.</b> Execute as: <b>Me</b> · Access: <b>Anyone</b><br>
-        <b>5.</b> Copy the Web App URL and paste below
+        <b>4.</b> Execute as: <b>Me</b> &nbsp;·&nbsp; Who has access: <b>Anyone</b><br>
+        <b>5.</b> Authorize → Copy the Web App URL → paste below
       </div>
     </div>
-    <div id="setup-error" class="error-text"></div>
-    <label>Your Web App URL</label>
-    <input id="script-url-input" type="url" placeholder="https://script.google.com/macros/s/..."/>
-    <button class="btn btn-primary" id="connect-btn" onclick="connectSheet()">Connect &amp; Load Data</button>
+    <div id="setup-err" class="error-text"></div>
+    <label>Web App URL</label>
+    <input id="url-in" type="url" placeholder="https://script.google.com/macros/s/…/exec"/>
+    <button class="btn btn-primary" onclick="connectSheet()">Connect &amp; Load Data</button>
   </div>`;
 }
 
-async function connectSheet(){
-  const url = document.getElementById("script-url-input").value.trim();
-  const errEl = document.getElementById("setup-error");
-  if(!url.startsWith("https://script.google.com")){
-    errEl.textContent = "That doesn't look like a Google Apps Script URL."; return;
-  }
-  SCRIPT_URL = url;
-  document.getElementById("connect-btn").disabled = true;
-  document.getElementById("connect-btn").innerHTML = "<span class='spinner'></span>Connecting...";
-  try{
+async function connectSheet() {
+  const url = (document.getElementById("url-in").value||"").trim();
+  const err = document.getElementById("setup-err");
+  if (!url.startsWith("https://script.google.com")) { err.textContent="Doesn't look like a Script URL."; return; }
+  SCRIPT_URL=url; err.textContent="";
+  view="loading"; render();
+  try {
     await loadAll();
-    localStorage.setItem(SCRIPT_URL_KEY, SCRIPT_URL);
-    navigate("dashboard");
-  }catch(e){
-    errEl.textContent = "Connection failed: " + e.message;
-    document.getElementById("connect-btn").disabled = false;
-    document.getElementById("connect-btn").textContent = "Connect & Load Data";
+    localStorage.setItem(URL_KEY, SCRIPT_URL);
+    go("dashboard");
+  } catch(e) {
+    SCRIPT_URL=""; view="setup"; render();
+    document.getElementById("setup-err").textContent="Connection failed: "+e.message;
   }
 }
 
-// ---- DASHBOARD ----
-function renderDashboard(){
-  const sr = sortedRecords();
-  const vMap = Object.fromEntries(vehicles.map(v=>[v.id,v]));
-  const overdue = sr.filter(r=>r.nextDue&&daysUntil(r.nextDue)<0).length;
-  const soon    = sr.filter(r=>r.nextDue&&daysUntil(r.nextDue)>=0&&daysUntil(r.nextDue)<=30).length;
+function rDashboard() {
+  const sr=sorted(), vmap=vm();
+  const overdue=sr.filter(r=>{ const d=estimateDays(r); return d!==null&&d<0; }).length;
+  const soon   =sr.filter(r=>{ const d=estimateDays(r); return d!==null&&d>=0&&d<=30; }).length;
 
-  let tasksHTML = "";
-  if(sr.length===0){
-    tasksHTML = `<p class="empty">No tasks yet. Hit "+ Add Task" to get started.</p>`;
-  } else {
-    sr.forEach(r=>{
-      const v = vMap[r.vehicleId] || {};
-      const days = r.nextDue ? daysUntil(r.nextDue) : null;
-      const calBtn = r.nextDue
-        ? `<button class="small-btn small-btn-blue" onclick="openCal('${r.id}')">📅 Calendar</button>` : "";
-      tasksHTML += `
-      <div class="card" style="cursor:pointer" onclick="navigate('vehicle-detail','${r.vehicleId}')">
-        <div class="task-row">
-          <div style="flex:1">
-            <div class="task-title">${r.task}</div>
-            <div class="task-meta">${v.name||"?"} · ${dueInfo(r)}</div>
-          </div>
-          ${days!==null?`<span class="badge ${badgeClass(days)}">${badgeLabel(days)}</span>`:""}
-        </div>
-        <div class="task-actions" onclick="event.stopPropagation()">
-          <button class="small-btn small-btn-green" onclick="logDone('${r.id}')">✓ Log Done</button>
-          ${calBtn}
-        </div>
-      </div>`;
-    });
-  }
-
-  return `
-  <div class="header">
-    <div class="header-row">
-      <div><h1>Maintenance Tracker</h1><p>${vehicles.length} vehicles · ${records.length} tasks${syncing?" · syncing…":""}</p></div>
-      <button class="small-btn small-btn-white" onclick="navigate('add-record')">＋ Task</button>
-    </div>
-  </div>
-  <div class="section">
-    <div class="summary-row">
-      <div class="summary-box" style="background:#dc2626"><div class="num">${overdue}</div><div class="lbl">Overdue</div></div>
-      <div class="summary-box" style="background:#f59e0b"><div class="num">${soon}</div><div class="lbl">Due in 30d</div></div>
-      <div class="summary-box" style="background:#100299"><div class="num">${vehicles.length}</div><div class="lbl">Vehicles</div></div>
-    </div>
-    ${vehicles.length===0?`
-      <div style="text-align:center;margin-top:32px">
-        <p style="font-size:18px;font-weight:700;color:#100299;margin-bottom:8px">You're connected!</p>
-        <p style="color:#6b7280;margin-bottom:16px">Start by adding your vehicles.</p>
-        <button class="btn btn-primary" onclick="navigate('add-vehicle')">Add First Vehicle</button>
-      </div>`:
-    `<div class="section-label" style="margin-top:12px">All Tasks by Urgency</div>${tasksHTML}`}
-  </div>
-  ${navHTML("dashboard")}`;
-}
-
-// ---- VEHICLES LIST ----
-function renderVehicles(){
-  let list = "";
-  vehicles.forEach(v=>{
-    const vr = records.filter(r=>r.vehicleId===v.id);
-    const urgent = vr.filter(r=>r.nextDue&&daysUntil(r.nextDue)<=14).length;
-    list += `
-    <div class="card" style="cursor:pointer" onclick="navigate('vehicle-detail','${v.id}')">
-      <div class="vehicle-row">
-        <div>
-          <div style="font-weight:700">${v.name}</div>
-          <div style="font-size:12px;color:#6b7280">${v.year?v.year+" ":""}${v.type} · ${vr.length} task${vr.length!==1?"s":""}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${urgent>0?`<span class="badge badge-yellow">${urgent} soon</span>`:""}
-          <span class="chevron">›</span>
-        </div>
-      </div>
-    </div>`;
-  });
-  return `
-  <div class="header">
-    <div class="header-row">
-      <h1>My Vehicles</h1>
-      <button class="small-btn small-btn-white" onclick="navigate('add-vehicle')">＋ Add</button>
-    </div>
-  </div>
-  <div class="section">
-    ${vehicles.length===0?`<p class="empty">No vehicles yet.</p>`:list}
-    <button class="btn btn-primary" onclick="navigate('add-vehicle')">＋ Add Vehicle</button>
-  </div>
-  ${navHTML("vehicles")}`;
-}
-
-// ---- ADD VEHICLE ----
-function renderAddVehicle(){
-  const typeOpts = VEHICLE_TYPES.map(t=>`<option>${t}</option>`).join("");
-  return `
-  <div class="header">
-    <div class="header-row">
-      <h1>Add Vehicle</h1>
-      <button class="small-btn small-btn-white" onclick="navigate('vehicles')">Cancel</button>
-    </div>
-  </div>
-  <div class="section">
-    <label>Name / Nickname *</label>
-    <input id="v-name" placeholder="e.g. Blue Pickup, Bass Boat"/>
-    <label>Type</label>
-    <select id="v-type">${typeOpts}</select>
-    <label>Year (optional)</label>
-    <input id="v-year" type="number" placeholder="2013"/>
-    <label>Notes (optional)</label>
-    <input id="v-notes" placeholder="e.g. 6.7L diesel, 45K miles"/>
-    <div id="v-error" class="error-text"></div>
-    <button class="btn btn-primary" id="save-vehicle-btn" onclick="saveVehicle()">Add Vehicle</button>
-  </div>
-  ${navHTML("")}`;
-}
-
-async function saveVehicle(){
-  const name = document.getElementById("v-name").value.trim();
-  if(!name){ document.getElementById("v-error").textContent="Name is required."; return; }
-  const v = {
-    id: genId(),
-    name,
-    type:  document.getElementById("v-type").value,
-    year:  document.getElementById("v-year").value,
-    notes: document.getElementById("v-notes").value,
-  };
-  setSyncing(true);
-  try{
-    await api("saveVehicle",{vehicle:v});
-    vehicles.push(v);
-    showToast(`${v.name} added!`);
-    navigate("vehicles");
-  }catch(e){ showToast("Save failed: "+e.message); }
-  setSyncing(false);
-}
-
-// ---- ADD RECORD ----
-let _addRecordData = { vehicleId:"", triggerType:"Every X Days", customMode:false };
-
-function renderAddRecord(){
-  const vOpts = vehicles.map(v=>`<option value="${v.id}" ${v.id===_addRecordData.vehicleId||v.id===selectedVehicleId?"selected":""}>${v.name}</option>`).join("");
-  const selVId = _addRecordData.vehicleId || selectedVehicleId || (vehicles[0]&&vehicles[0].id) || "";
-  const selV = vehicles.find(v=>v.id===selVId);
-  const taskOpts = selV ? (MAINTENANCE_PRESETS[selV.type]||MAINTENANCE_PRESETS.Other).map(t=>`<option>${t}</option>`).join("") : "";
-  const tt = _addRecordData.triggerType;
-  const today = new Date().toISOString().slice(0,10);
-  const monthOpts = MONTH_NAMES.map((m,i)=>`<option value="${i}" ${i===8?"selected":""}>${m}</option>`).join("");
-
-  return `
-  <div class="header">
-    <div class="header-row">
-      <h1>Add Task</h1>
-      <button class="small-btn small-btn-white" onclick="navigate('dashboard')">Cancel</button>
-    </div>
-  </div>
-  <div class="section">
-    <label>Vehicle *</label>
-    <select id="r-vehicle" onchange="onVehicleChange(this.value)">
-      <option value="">Select vehicle...</option>
-      ${vOpts}
-    </select>
-
-    ${selV?`
-    <label>Task *</label>
-    ${!_addRecordData.customMode?`
-      <select id="r-task"><option value="">Select task...</option>${taskOpts}</select>
-      <button class="btn btn-ghost" style="margin-top:4px;font-size:12px" onclick="toggleCustomTask(true)">＋ Custom task</button>
-    `:`
-      <input id="r-task-custom" placeholder="Custom task name"/>
-      <button class="btn btn-ghost" style="margin-top:4px;font-size:12px" onclick="toggleCustomTask(false)">Use preset task</button>
-    `}
-
-    <label>Reminder Type</label>
-    <select id="r-trigger" onchange="onTriggerChange(this.value)">
-      ${TRIGGER_TYPES.map(t=>`<option ${t===tt?"selected":""}>${t}</option>`).join("")}
-    </select>
-
-    ${tt==="Every X Days"?`
-      <label>Last Service Date</label>
-      <input id="r-last-date" type="date" value="${today}"/>
-      <label>Repeat Every (days)</label>
-      <input id="r-interval" type="number" placeholder="e.g. 180 = every 6 months"/>
-    `:""}
-    ${tt==="Seasonal (Month)"?`
-      <label>Every year in:</label>
-      <select id="r-month">${monthOpts}</select>
-    `:""}
-    ${tt==="Miles"?`
-      <label>Last Service Mileage</label>
-      <input id="r-last-miles" type="number" placeholder="e.g. 45000"/>
-      <label>Service Interval (miles)</label>
-      <input id="r-miles-int" type="number" placeholder="e.g. 5000"/>
-      <p class="hint">Shows target mileage. Update when logging.</p>
-    `:""}
-    ${tt==="Hours"?`
-      <label>Last Service Hours</label>
-      <input id="r-last-hours" type="number" placeholder="e.g. 250"/>
-      <label>Service Interval (hours)</label>
-      <input id="r-hours-int" type="number" placeholder="e.g. 100"/>
-    `:""}
-
-    <label>Notes (optional)</label>
-    <input id="r-notes" placeholder="e.g. Use synthetic 5W-30"/>
-    <div id="r-error" class="error-text"></div>
-    <button class="btn btn-primary" onclick="saveRecord()">Save Task</button>
-    `:"<p class='hint' style='margin-top:16px'>Select a vehicle first.</p>"}
-  </div>
-  ${navHTML("add-record")}`;
-}
-
-function onVehicleChange(id){ _addRecordData.vehicleId = id; selectedVehicleId = id; render(); }
-function onTriggerChange(v){ _addRecordData.triggerType = v; render(); }
-function toggleCustomTask(custom){ _addRecordData.customMode = custom; render(); }
-
-async function saveRecord(){
-  const vehicleId = document.getElementById("r-vehicle").value;
-  const task = _addRecordData.customMode
-    ? (document.getElementById("r-task-custom")||{value:""}).value.trim()
-    : (document.getElementById("r-task")||{value:""}).value;
-  if(!vehicleId||!task){ document.getElementById("r-error").textContent="Vehicle and task are required."; return; }
-
-  const tt = _addRecordData.triggerType;
-  const r = {
-    id: genId(), vehicleId, task, triggerType: tt,
-    intervalDays: tt==="Every X Days"  ? (document.getElementById("r-interval")||{value:""}).value : "",
-    seasonalMonth:tt==="Seasonal (Month)"?(document.getElementById("r-month")||{value:"8"}).value  : "",
-    lastDate:     tt==="Every X Days"  ? (document.getElementById("r-last-date")||{value:""}).value: "",
-    lastMiles:    tt==="Miles"         ? (document.getElementById("r-last-miles")||{value:""}).value: "",
-    lastHours:    tt==="Hours"         ? (document.getElementById("r-last-hours")||{value:""}).value: "",
-    milesInterval:tt==="Miles"         ? (document.getElementById("r-miles-int")||{value:""}).value : "",
-    hoursInterval:tt==="Hours"         ? (document.getElementById("r-hours-int")||{value:""}).value : "",
-    notes: (document.getElementById("r-notes")||{value:""}).value,
-  };
-  r.nextDue = computeNextDue(r);
-
-  setSyncing(true);
-  try{
-    await api("saveRecord",{record:r});
-    records.push(r);
-    _addRecordData = { vehicleId:"", triggerType:"Every X Days", customMode:false };
-    showToast("Task saved!");
-    navigate(selectedVehicleId?"vehicle-detail":"dashboard", selectedVehicleId);
-  }catch(e){ showToast("Save failed: "+e.message); }
-  setSyncing(false);
-}
-
-// ---- VEHICLE DETAIL ----
-function renderVehicleDetail(){
-  const v = vehicles.find(x=>x.id===selectedVehicleId);
-  if(!v) return `<div class="section"><p class="empty">Vehicle not found.</p></div>${navHTML("")}`;
-  const vr = sortedRecords().filter(r=>r.vehicleId===v.id);
-
-  let tasksHTML = vr.length===0
-    ? `<p class="empty">No tasks yet.</p>`
-    : vr.map(r=>{
-        const days = r.nextDue ? daysUntil(r.nextDue) : null;
-        const calBtn = r.nextDue
-          ? `<button class="small-btn small-btn-blue" onclick="openCal('${r.id}')">📅 Calendar</button>` : "";
+  const tasks = sr.length===0
+    ? `<p class="empty">No tasks yet — add a vehicle and set up maintenance tasks.</p>`
+    : sr.map(r=>{
+        const v=vmap[r.vehicleId]||{};
+        const d=estimateDays(r);
         return `
-        <div class="card">
+        <div class="card" style="cursor:pointer" onclick="go('vehicle-detail','${r.vehicleId}')">
           <div class="task-row">
             <div style="flex:1">
               <div class="task-title">${r.task}</div>
-              <div class="task-meta">${r.triggerType} · ${dueInfo(r)}</div>
-              ${r.notes?`<div class="task-notes">${r.notes}</div>`:""}
+              <div class="task-meta">${v.name||"?"} · ${dueLabel(r)}</div>
             </div>
-            ${days!==null?`<span class="badge ${badgeClass(days)}">${badgeLabel(days)}</span>`:""}
+            <span class="badge ${badgeClass(d)}">${badgeLabel(d)}</span>
           </div>
-          <div class="task-actions">
-            <button class="small-btn small-btn-green" onclick="logDone('${r.id}')">✓ Log Done</button>
-            ${calBtn}
-            <button class="small-btn small-btn-red" onclick="deleteRecord('${r.id}')">Delete</button>
+          <div class="task-actions" onclick="event.stopPropagation()">
+            <button class="small-btn small-btn-green" onclick="openLog('${r.id}')">✓ Log Done</button>
+            ${r.nextDueDate?`<button class="small-btn small-btn-blue" onclick="openCal('${r.id}')">📅 Cal</button>`:""}
           </div>
         </div>`;
       }).join("");
@@ -571,98 +275,422 @@ function renderVehicleDetail(){
   return `
   <div class="header">
     <div class="header-row">
-      <div><h1>${v.name}</h1><p>${v.year?v.year+" ":""}${v.type}${v.notes?" · "+v.notes:""}</p></div>
-      <button class="small-btn small-btn-white" onclick="navigate('dashboard')">Back</button>
+      <div><h1>Maintenance Tracker</h1><p>${vehicles.length} vehicles · ${records.length} tasks${syncing?" · saving…":""}</p></div>
+      <button class="small-btn small-btn-white" onclick="go('add-vehicle')">＋ Vehicle</button>
     </div>
   </div>
   <div class="section">
-    <button class="btn btn-outline" onclick="navigate('add-record','${v.id}')">＋ Add Maintenance Task</button>
-    <div style="margin-top:12px">${tasksHTML}</div>
-    <button class="btn btn-danger" style="margin-top:24px" onclick="deleteVehicle('${v.id}')">Delete Vehicle &amp; All Tasks</button>
+    <div class="summary-row">
+      <div class="summary-box" style="background:#dc2626"><div class="num">${overdue}</div><div class="lbl">Overdue</div></div>
+      <div class="summary-box" style="background:#f59e0b"><div class="num">${soon}</div><div class="lbl">Due ≤30d</div></div>
+      <div class="summary-box" style="background:#100299"><div class="num">${vehicles.length}</div><div class="lbl">Vehicles</div></div>
+    </div>
+    ${vehicles.length===0
+      ? `<div style="text-align:center;margin-top:32px">
+           <p style="font-size:18px;font-weight:700;color:#100299;margin-bottom:8px">Connected!</p>
+           <p style="color:#6b7280;margin-bottom:16px">Start by adding your vehicles.</p>
+           <button class="btn btn-primary" onclick="go('add-vehicle')">Add First Vehicle</button>
+         </div>`
+      : `<div class="section-label" style="margin-top:14px">All Tasks · Sorted by Urgency</div>${tasks}`}
   </div>
-  ${navHTML("")}`;
+  ${nav("dashboard")}`;
 }
 
-// ---- ACTIONS ----
-async function logDone(recordId){
-  const r = records.find(x=>x.id===recordId);
-  if(!r) return;
-  const today = new Date().toISOString().slice(0,10);
-  const updated = {...r, lastDate:today};
-  updated.nextDue = computeNextDue(updated);
-  setSyncing(true);
-  try{
-    await api("updateRecord",{record:updated});
-    const idx = records.findIndex(x=>x.id===recordId);
-    records[idx] = updated;
-    showToast("Logged! Next due date updated.");
-    render();
-  }catch(e){ showToast("Update failed: "+e.message); }
-  setSyncing(false);
+function rVehicles() {
+  const rows = vehicles.map(v=>{
+    const vr = records.filter(r=>r.vehicleId===v.id);
+    const urgent = vr.filter(r=>{ const d=estimateDays(r); return d!==null&&d<=14; }).length;
+    const u = unit(v.trackingType);
+    const cur = v.currentUsage&&u ? `${fNum(v.currentUsage)} ${u}` : "";
+    const avg = v.avgWeeklyUsage&&u ? `~${fNum(v.avgWeeklyUsage)} ${u}/wk` : "";
+    return `
+    <div class="card" style="cursor:pointer" onclick="go('vehicle-detail','${v.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:700">${v.name}</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px">${v.year?v.year+" ":""}${v.type} · ${vr.length} task${vr.length!==1?"s":""}</div>
+          ${cur||avg?`<div style="margin-top:4px">${cur?`<span class="pill">${cur}</span>`:""}${avg?`<span class="pill">${avg}</span>`:""}</div>`:""}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${urgent>0?`<span class="badge badge-yellow">${urgent} soon</span>`:""}
+          <span class="chevron">›</span>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+
+  return `
+  <div class="header">
+    <div class="header-row"><h1>Fleet</h1>
+      <button class="small-btn small-btn-white" onclick="go('add-vehicle')">＋ Add</button>
+    </div>
+  </div>
+  <div class="section">
+    ${vehicles.length===0?`<p class="empty">No vehicles yet.</p>`:rows}
+    <button class="btn btn-primary" onclick="go('add-vehicle')">＋ Add Vehicle</button>
+  </div>
+  ${nav("vehicles")}`;
 }
 
-async function deleteRecord(recordId){
-  if(!confirm("Delete this task?")) return;
-  setSyncing(true);
-  try{
-    await api("deleteRecord",{id:recordId});
-    records = records.filter(r=>r.id!==recordId);
-    showToast("Task deleted.");
-    render();
-  }catch(e){ showToast("Delete failed: "+e.message); }
-  setSyncing(false);
+function rAddVehicle() {
+  const typeOpts = VEHICLE_TYPES.map(t=>`<option>${t}</option>`).join("");
+  return `
+  <div class="header">
+    <div class="header-row"><h1>Add Vehicle</h1>
+      <button class="small-btn small-btn-white" onclick="go('vehicles')">Cancel</button>
+    </div>
+  </div>
+  <div class="section">
+    <label>Name *</label>
+    <input id="vn" placeholder="e.g. Blue Pickup, Bass Boat, Big Trailer"/>
+    <label>Type</label>
+    <select id="vt" onchange="onVType(this.value)">${typeOpts}</select>
+    <div id="vtrack" class="hint" style="margin-top:6px">📍 Tracking: Miles (odometer)</div>
+    <div id="vusage-wrap">
+      <label id="vcur-lbl">Current Odometer (miles)</label>
+      <input id="vcur" type="number" placeholder="e.g. 45000"/>
+      <label id="vavg-lbl">Estimated Weekly Miles <span style="font-weight:400;color:#9ca3af">(starting estimate)</span></label>
+      <input id="vavg" type="number" placeholder="e.g. 150"/>
+      <p class="hint">The app will recalculate this automatically each time you log service.</p>
+    </div>
+    <div id="vcustom-wrap" style="display:none">
+      <label>Tracking Type</label>
+      <select id="vctype">
+        <option value="miles">Miles (odometer)</option>
+        <option value="hours">Hours (engine hours)</option>
+        <option value="date">Date only</option>
+      </select>
+    </div>
+    <label>Year (optional)</label>
+    <input id="vyr" type="number" placeholder="2020"/>
+    <label>Parts & Supplies (optional)</label>
+    <input id="rsupplies" placeholder="e.g. 5W-30 oil (5qt), oil filter, drain plug washer"/>
+    <p class="hint">Shown in your reminder email so you can shop ahead of time.</p>
+    <label>Notes (optional)</label>
+    <input id="vnotes" placeholder="e.g. 6.7L diesel, red kart"/>
+    <div id="verr" class="error-text"></div>
+    <button class="btn btn-primary" onclick="saveVehicle()">Add Vehicle</button>
+  </div>
+  ${nav("")}`;
 }
 
-async function deleteVehicle(vehicleId){
-  const v = vehicles.find(x=>x.id===vehicleId);
-  if(!confirm(`Delete ${v?.name} and all its tasks? This cannot be undone.`)) return;
-  setSyncing(true);
-  try{
-    await api("deleteVehicle",{id:vehicleId});
-    vehicles = vehicles.filter(x=>x.id!==vehicleId);
-    records  = records.filter(r=>r.vehicleId!==vehicleId);
-    showToast("Vehicle deleted.");
-    navigate("vehicles");
-  }catch(e){ showToast("Delete failed: "+e.message); }
-  setSyncing(false);
-}
-
-function openCal(recordId){
-  const r = records.find(x=>x.id===recordId);
-  const v = vehicles.find(x=>x.id===r?.vehicleId);
-  if(!r?.nextDue){ showToast("No date set for this task."); return; }
-  window.open(gcalUrl(`${v?.name} - ${r.task}`, r.nextDue, r.notes||""), "_blank");
-}
-
-function setSyncing(val){
-  syncing = val;
-  // Update subtitle if on dashboard
-  const sub = document.querySelector(".header p");
-  if(sub && currentView==="dashboard"){
-    sub.textContent = `${vehicles.length} vehicles · ${records.length} tasks${syncing?" · syncing…":""}`;
+function onVType(type) {
+  const t = TRACKING[type]||"ask";
+  const info = document.getElementById("vtrack");
+  const uw   = document.getElementById("vusage-wrap");
+  const cw   = document.getElementById("vcustom-wrap");
+  const cl   = document.getElementById("vcur-lbl");
+  const al   = document.getElementById("vavg-lbl");
+  const ci   = document.getElementById("vcur");
+  const ai   = document.getElementById("vavg");
+  if (t==="miles") {
+    info.textContent="📍 Tracking: Miles (odometer)";
+    uw.style.display=""; cw.style.display="none";
+    cl.textContent="Current Odometer (miles)"; ci.placeholder="e.g. 45000";
+    al.innerHTML='Estimated Weekly Miles <span style="font-weight:400;color:#9ca3af">(starting estimate)</span>';
+    ai.placeholder="e.g. 150";
+  } else if (t==="hours") {
+    info.textContent="📍 Tracking: Engine Hours";
+    uw.style.display=""; cw.style.display="none";
+    cl.textContent="Current Engine Hours"; ci.placeholder="e.g. 250";
+    al.innerHTML='Estimated Weekly Hours <span style="font-weight:400;color:#9ca3af">(starting estimate)</span>';
+    ai.placeholder="e.g. 5";
+  } else if (t==="date") {
+    info.textContent="📍 Tracking: Date only (no odometer/hours)";
+    uw.style.display="none"; cw.style.display="none";
+  } else {
+    info.textContent="📍 Custom tracking";
+    uw.style.display="none"; cw.style.display="block";
   }
 }
 
-function bindEvents(){
-  // inputs that need enter-key support
-  document.querySelectorAll("input").forEach(el=>{
-    el.addEventListener("keydown", e=>{ if(e.key==="Enter") e.target.blur(); });
-  });
+async function saveVehicle() {
+  const name = (document.getElementById("vn").value||"").trim();
+  if (!name) { document.getElementById("verr").textContent="Name is required."; return; }
+  const type = document.getElementById("vt").value;
+  const rawT = TRACKING[type]||"ask";
+  const trackingType = rawT==="ask"
+    ? (document.getElementById("vctype")||{value:"miles"}).value
+    : rawT;
+  const v = {
+    id: genId(), name, type, trackingType,
+    year:  document.getElementById("vyr").value,
+    notes: document.getElementById("vnotes").value,
+    currentUsage:   (document.getElementById("vcur")||{value:""}).value,
+    avgWeeklyUsage: (document.getElementById("vavg")||{value:""}).value,
+    lastLoggedUsage: "",
+    lastLoggedDate:  "",
+  };
+  syncing=true;
+  try {
+    const r = await api("saveVehicle",{vehicle:v});
+    if (r.error) throw new Error(r.error);
+    vehicles.push(v);
+    showToast(`${v.name} added!`);
+    go("vehicles");
+  } catch(e) { showToast("Save failed: "+e.message); }
+  syncing=false;
 }
 
-// ============================================================
-//  INIT
-// ============================================================
-async function init(){
-  render(); // show setup or loading state
-  if(SCRIPT_URL){
-    try{
+function rAddRecord() {
+  const preVid = rf.vehicleId||selVid||"";
+  const sv = vehicles.find(v=>v.id===preVid)||vehicles[0];
+  const vOpts = vehicles.map(v=>`<option value="${v.id}" ${v.id===preVid?"selected":""}>${v.name}</option>`).join("");
+  const taskOpts = sv ? (PRESETS[sv.type]||PRESETS.Other).map(t=>`<option>${t}</option>`).join("") : "";
+  const tt = rf.triggerType;
+  const today = new Date().toISOString().slice(0,10);
+  const monthOpts = MONTHS.map((m,i)=>`<option value="${i}" ${i===8?"selected":""}>${m}</option>`).join("");
+  const tracking = sv?.trackingType||"miles";
+  const u = unit(tracking);
+
+  // Available trigger types depend on vehicle tracking type
+  const triggers = tracking==="date"
+    ? ["Every X Days","Seasonal (Month)"]
+    : ["Every X Days","Seasonal (Month)", tracking==="miles"?"Miles":"Hours"];
+
+  return `
+  <div class="header">
+    <div class="header-row"><h1>Add Maintenance Task</h1>
+      <button class="small-btn small-btn-white" onclick="go(selVid?'vehicle-detail':'dashboard')">Cancel</button>
+    </div>
+  </div>
+  <div class="section">
+    <label>Vehicle *</label>
+    <select id="rv" onchange="onRVehicle(this.value)">
+      <option value="">Select vehicle…</option>${vOpts}
+    </select>
+
+    ${sv ? `
+    <label>Task *</label>
+    ${!rf.customMode
+      ? `<select id="rt"><option value="">Select task…</option>${taskOpts}</select>
+         <button class="btn btn-ghost" style="font-size:12px;margin-top:4px" onclick="rfToggle(true)">＋ Custom task</button>`
+      : `<input id="rt-custom" placeholder="e.g. Spark plugs, Impeller"/>
+         <button class="btn btn-ghost" style="font-size:12px;margin-top:4px" onclick="rfToggle(false)">← Use preset list</button>`
+    }
+
+    <label>Reminder Type</label>
+    <select id="rtt" onchange="onTT(this.value)">
+      ${triggers.map(t=>`<option ${t===tt?"selected":""}>${t}</option>`).join("")}
+    </select>
+
+    ${tt==="Every X Days"?`
+      <label>Last Service Date</label>
+      <input id="rldate" type="date" value="${today}"/>
+      <label>Repeat Interval (days)</label>
+      <input id="rint" type="number" placeholder="e.g. 90, 180, 365"/>
+      <p class="hint">Every 3 months = 90 · Every 6 months = 180 · Yearly = 365</p>`:""}
+
+    ${tt==="Seasonal (Month)"?`
+      <label>Every year in:</label>
+      <select id="rmonth">${monthOpts}</select>`:""}
+
+    ${tt==="Miles"||tt==="Hours"?`
+      <label>Last Service ${tt} Reading</label>
+      <input id="rluse" type="number" placeholder="${u==="mi"?"e.g. 45000":"e.g. 250"}"/>
+      <label>Service Interval (${u})</label>
+      <input id="ruse-int" type="number" placeholder="${u==="mi"?"e.g. 5000":"e.g. 100"}"/>
+      <p class="hint">Next due = last reading + interval. Auto-updates every time you log service.</p>`:""}
+
+    <label>Notes (optional)</label>
+    <input id="rnotes" placeholder="e.g. Use synthetic 5W-30, torque to spec"/>
+    <div id="rerr" class="error-text"></div>
+    <button class="btn btn-primary" onclick="saveRecord()">Save Task</button>
+    ` : `<p class="hint" style="margin-top:16px">Select a vehicle to continue.</p>`}
+  </div>
+  ${nav("add-record")}`;
+}
+
+function onRVehicle(id) { rf.vehicleId=id; selVid=id; render(); }
+function onTT(v) { rf.triggerType=v; render(); }
+function rfToggle(c) { rf.customMode=c; render(); }
+
+async function saveRecord() {
+  const vid  = (document.getElementById("rv")||{value:""}).value;
+  const task = rf.customMode
+    ? (document.getElementById("rt-custom")||{value:""}).value.trim()
+    : (document.getElementById("rt")||{value:""}).value;
+  if (!vid||!task) { document.getElementById("rerr").textContent="Vehicle and task are required."; return; }
+  const tt = rf.triggerType;
+  const r = {
+    id: genId(), vehicleId:vid, task, triggerType:tt,
+    intervalDays:   tt==="Every X Days"      ? (document.getElementById("rint")||{value:""}).value   : "",
+    seasonalMonth:  tt==="Seasonal (Month)"  ? (document.getElementById("rmonth")||{value:"8"}).value : "",
+    lastDate:       tt==="Every X Days"      ? (document.getElementById("rldate")||{value:""}).value  : "",
+    lastUsage:      tt==="Miles"||tt==="Hours"? (document.getElementById("rluse")||{value:""}).value  : "",
+    usageInterval:  tt==="Miles"||tt==="Hours"? (document.getElementById("ruse-int")||{value:""}).value:"",
+    supplies: (document.getElementById("rsupplies")||{value:""}).value,
+    notes: (document.getElementById("rnotes")||{value:""}).value,
+  };
+  r.nextDueDate  = nextDueDate(r);
+  r.nextDueUsage = nextDueUsage(r);
+  syncing=true;
+  try {
+    const res = await api("saveRecord",{record:r});
+    if (res.error) throw new Error(res.error);
+    records.push(r);
+    rf = {vehicleId:"",triggerType:"Every X Days",customMode:false};
+    showToast("Task saved!");
+    go(selVid?"vehicle-detail":"dashboard", selVid);
+  } catch(e) { showToast("Save failed: "+e.message); }
+  syncing=false;
+}
+
+function rDetail() {
+  const v = vehicles.find(x=>x.id===selVid);
+  if (!v) return `<div class="section"><p class="empty">Vehicle not found.</p></div>${nav("")}`;
+  const sr = sorted(selVid);
+  const u  = unit(v.trackingType);
+
+  const tasks = sr.length===0
+    ? `<p class="empty" style="margin-top:16px">No tasks yet.</p>`
+    : sr.map(r=>{
+        const d=estimateDays(r);
+        return `
+        <div class="card">
+          <div class="task-row">
+            <div style="flex:1">
+              <div class="task-title">${r.task}</div>
+              <div class="task-meta">${r.triggerType} · ${dueLabel(r)}</div>
+              ${r.notes?`<div class="task-notes">${r.notes}</div>`:""}
+              ${r.supplies?`<div class="task-notes">🛒 ${r.supplies}</div>`:""}
+            </div>
+            <span class="badge ${badgeClass(d)}">${badgeLabel(d)}</span>
+          </div>
+          <div class="task-actions">
+            <button class="small-btn small-btn-green" onclick="openLog('${r.id}')">✓ Log Done</button>
+            ${r.nextDueDate?`<button class="small-btn small-btn-blue" onclick="openCal('${r.id}')">📅 Cal</button>`:""}
+            <button class="small-btn small-btn-red" onclick="delRecord('${r.id}')">Delete</button>
+          </div>
+        </div>`;
+      }).join("");
+
+  return `
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <h1>${v.name}</h1>
+        <p>${v.year?v.year+" ":""}${v.type}${v.notes?" · "+v.notes:""}</p>
+      </div>
+      <button class="small-btn small-btn-white" onclick="go('vehicles')">Back</button>
+    </div>
+  </div>
+  <div class="section">
+    ${u?`<div style="margin-bottom:12px">
+      ${v.currentUsage?`<span class="pill">📍 ${fNum(v.currentUsage)} ${u}</span>`:""}
+      ${v.avgWeeklyUsage?`<span class="pill">~${fNum(v.avgWeeklyUsage)} ${u}/wk avg</span>`:""}
+    </div>`:""}
+    <button class="btn btn-outline" onclick="go('add-record','${v.id}')">＋ Add Maintenance Task</button>
+    <div class="divider"></div>
+    ${tasks}
+    <button class="btn btn-danger" style="margin-top:24px" onclick="delVehicle('${v.id}')">Delete Vehicle &amp; All Tasks</button>
+  </div>
+  ${nav("")}`;
+}
+
+// ── LOG DONE MODAL ───────────────────────────────────────────
+function openLog(rid) {
+  logRec = records.find(r=>r.id===rid);
+  if (!logRec) return;
+  const v   = vehicles.find(x=>x.id===logRec.vehicleId)||{};
+  const u   = unit(v.trackingType);
+  const needsUsage = logRec.triggerType==="Miles"||logRec.triggerType==="Hours";
+  const today = new Date().toISOString().slice(0,10);
+
+  document.getElementById("modal").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h2>Log Service</h2>
+      <p class="sub">${v.name} — ${logRec.task}</p>
+      <div class="divider"></div>
+      <label>Date of Service</label>
+      <input id="ld" type="date" value="${today}"/>
+      ${needsUsage?`
+        <label>${u==="mi"?"Odometer Reading (miles)":"Engine Hours Reading"}</label>
+        <input id="lu" type="number" placeholder="${v.currentUsage?`Last: ${fNum(v.currentUsage)} ${u}`:`Current ${u==="mi"?"mileage":"hours"}`}"/>
+        <p class="hint">Enter the current reading on your ${u==="mi"?"odometer":"hour meter"}. The app uses this to recalculate your weekly average and predict the next service date.</p>`:""}
+      <label>Notes (optional)</label>
+      <input id="ln" placeholder="e.g. Mobil 1 5W-30, replaced both front pads"/>
+      <button class="btn btn-primary" onclick="submitLog()" style="margin-top:16px">Save &amp; Schedule Next</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function closeModal() {
+  document.getElementById("modal").innerHTML="";
+  logRec=null;
+}
+
+async function submitLog() {
+  if (!logRec) return;
+  const date  = (document.getElementById("ld")||{value:""}).value;
+  const usage = (document.getElementById("lu")||{value:""}).value;
+  const notes = (document.getElementById("ln")||{value:""}).value;
+  if (!date) { showToast("Date is required."); return; }
+  const entry = {
+    id: genId(), vehicleId:logRec.vehicleId, recordId:logRec.id,
+    task:logRec.task, date, usageAtService:usage, notes,
+  };
+  syncing=true;
+  try {
+    const res = await api("logService",{entry});
+    if (res.error) throw new Error(res.error);
+    // Reload fresh data — server recomputed everything
+    await loadAll();
+    showToast("Logged! Next service date updated.");
+    closeModal();
+    render();
+  } catch(e) { showToast("Failed: "+e.message); }
+  syncing=false;
+}
+
+// ── ACTIONS ─────────────────────────────────────────────────
+async function delRecord(id) {
+  if (!confirm("Delete this task?")) return;
+  syncing=true;
+  try {
+    await api("deleteRecord",{id});
+    records=records.filter(r=>r.id!==id);
+    showToast("Task deleted.");
+    render();
+  } catch(e) { showToast("Failed: "+e.message); }
+  syncing=false;
+}
+
+async function delVehicle(id) {
+  const v=vehicles.find(x=>x.id===id);
+  if (!confirm(`Delete ${v?.name} and all its tasks? This cannot be undone.`)) return;
+  syncing=true;
+  try {
+    await api("deleteVehicle",{id});
+    vehicles=vehicles.filter(x=>x.id!==id);
+    records=records.filter(r=>r.vehicleId!==id);
+    showToast("Deleted.");
+    go("vehicles");
+  } catch(e) { showToast("Failed: "+e.message); }
+  syncing=false;
+}
+
+function openCal(rid) {
+  const r=records.find(x=>x.id===rid);
+  const v=vehicles.find(x=>x.id===r?.vehicleId);
+  if (!r?.nextDueDate) { showToast("No due date — use a date-based trigger type."); return; }
+  const d=r.nextDueDate.replace(/-/g,"");
+  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent((v?.name||"")+" - "+r.task)}&dates=${d}/${d}&details=${encodeURIComponent(r.notes||"")}`, "_blank");
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+async function init() {
+  render();
+  if (SCRIPT_URL) {
+    try {
       await loadAll();
-      navigate("dashboard");
-    }catch(e){
-      SCRIPT_URL = "";
-      localStorage.removeItem(SCRIPT_URL_KEY);
-      navigate("setup");
+      go("dashboard");
+    } catch(e) {
+      SCRIPT_URL="";
+      localStorage.removeItem(URL_KEY);
+      go("setup");
       showToast("Reconnect required.");
     }
   }
