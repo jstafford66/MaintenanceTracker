@@ -544,7 +544,7 @@ function recordForm(rec) {
     ${!rf.customMode
       ?`<select id="rt"><option value="">Select task…</option>${taskOpts}</select>
         ${!isEdit?`<button class="btn btn-ghost" style="font-size:12px;margin-top:4px" onclick="rfToggle(true)">＋ Custom task</button>`:""}`
-      :`<input id="rt-custom" value="${esc(rec?.task||"")}" placeholder="e.g. Spark plugs"/>
+      :`<input id="rt-custom" value="${esc(rec?.task||rf.savedTask||"")}" placeholder="e.g. Spark plugs"/>
         <button class="btn btn-ghost" style="font-size:12px;margin-top:4px" onclick="rfToggle(false)">← Use preset list</button>`
     }
     ${isEdit&&!rf.customMode?`<p class="hint" style="margin-top:4px">Current: <b>${esc(rec.task)}</b> — select a different task or <button style="background:none;border:none;color:#100299;font-size:12px;font-weight:600;cursor:pointer;padding:0" onclick="rfToggle(true)">enter custom</button></p>`:""}
@@ -590,15 +590,19 @@ function recordForm(rec) {
 function onRVehicle(id){rf.vehicleId=id;selVid=id;render();}
 function onTT(v){
   rf.triggerType=v;
-  // preserve task selection before re-render
+  // preserve task selection (preset dropdown OR typed custom text) before re-render
   const t=document.getElementById("rt");
+  const tc=document.getElementById("rt-custom");
   if(t) rf.savedTask=t.value;
+  if(tc) rf.savedTask=tc.value;
   render();
 }
 function rfToggle(c){
-  // preserve task selection before re-render
+  // preserve task selection (preset dropdown OR typed custom text) before re-render
   const t=document.getElementById("rt");
+  const tc=document.getElementById("rt-custom");
   if(t) rf.savedTask=t.value;
+  if(tc) rf.savedTask=tc.value;
   rf.customMode=c;
   render();
 }
@@ -810,10 +814,54 @@ function rDetail() {
       ${v.avgWeeklyUsage?`<span class="pill">~${fNum(v.avgWeeklyUsage)} ${u}/wk</span>`:""}
     </div>`:""}
     <button class="btn btn-outline" onclick="go('add-record','${v.id}')">＋ Add Maintenance Task</button>
+    ${u?`<button class="btn btn-ghost" onclick="openUsageLog('${v.id}')">📍 Log ${u==="mi"?"Mileage":"Hours"} (no service)</button>`:""}
     <div class="divider"></div>
     ${tasks}
   </div>
   ${nav("")}`;
+}
+
+// ── LOG MILEAGE/HOURS ONLY (no task) ──────────────────────────
+function openUsageLog(vid) {
+  const v=vehicles.find(x=>x.id===vid);
+  if (!v) return;
+  const u=unit(v.trackingType);
+  if (!u) { showToast("This vehicle doesn't track mileage or hours."); return; }
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById("modal").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h2>Log ${u==="mi"?"Mileage":"Hours"}</h2>
+      <p class="sub">${esc(v.name)} — no maintenance done, just an update</p>
+      <div class="divider"></div>
+      <label>Date</label>
+      <input id="uld" type="date" value="${today}"/>
+      <label>${u==="mi"?"Odometer Reading (miles)":"Engine Hours Reading"}</label>
+      <input id="ulu" type="number" placeholder="${v.currentUsage?`Last: ${fNum(v.currentUsage)} ${u}`:`Current ${u==="mi"?"mileage":"hours"}`}"/>
+      <p class="hint">Updates your weekly average and every task's due estimate. No maintenance record is touched.</p>
+      <label>Notes (optional)</label>
+      <input id="uln" placeholder="e.g. Road trip to Tahoe"/>
+      <button class="btn btn-primary" onclick="submitUsageLog('${vid}')" style="margin-top:16px">Save</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>`;
+}
+async function submitUsageLog(vid) {
+  const date=(document.getElementById("uld")||{value:""}).value;
+  const usage=(document.getElementById("ulu")||{value:""}).value;
+  const notes=(document.getElementById("uln")||{value:""}).value;
+  if (!date){showToast("Date is required.");return;}
+  if (!usage){showToast("Reading is required.");return;}
+  const entry={id:genId(),vehicleId:vid,recordId:"",task:"Mileage/Hours Update",date,usageAtService:usage,notes};
+  syncing=true;
+  try {
+    const res=await api("logService",{entry});
+    if(res.error) throw new Error(res.error);
+    await loadAll();
+    showToast("Updated!");
+    closeModal(); render();
+  } catch(e){showToast("Failed: "+e.message);}
+  syncing=false;
 }
 
 // ── LOG DONE MODAL ───────────────────────────────────────────
@@ -823,6 +871,7 @@ function openLog(rid) {
   const v=vehicles.find(x=>x.id===logRec.vehicleId)||{};
   const u=unit(v.trackingType);
   const needsUsage=logRec.triggerType==="Miles"||logRec.triggerType==="Hours";
+  const optionalUsage=!needsUsage&&u; // calendar/seasonal task, but vehicle still tracks miles/hours
   const today=new Date().toISOString().slice(0,10);
 
   document.getElementById("modal").innerHTML=`
@@ -837,6 +886,10 @@ function openLog(rid) {
         <label>${u==="mi"?"Odometer Reading (miles)":"Engine Hours Reading"}</label>
         <input id="lu" type="number" placeholder="${v.currentUsage?`Last: ${fNum(v.currentUsage)} ${u}`:`Current ${u==="mi"?"mileage":"hours"}`}"/>
         <p class="hint">Current reading on your ${u==="mi"?"odometer":"hour meter"}. Used to recalculate your weekly average and predict the next service.</p>`:""}
+      ${optionalUsage?`
+        <label>${u==="mi"?"Odometer Reading (miles)":"Engine Hours Reading"} <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
+        <input id="lu" type="number" placeholder="${v.currentUsage?`Last: ${fNum(v.currentUsage)} ${u}`:`Current ${u==="mi"?"mileage":"hours"}`}"/>
+        <p class="hint">Not required for this task, but if you enter it, it'll update your weekly average and every other task's estimate.</p>`:""}
       <label>Notes (optional)</label>
       <input id="ln" placeholder="e.g. Mobil 1 5W-30, replaced both front pads"/>
       <button class="btn btn-primary" onclick="submitLog()" style="margin-top:16px">Save &amp; Schedule Next</button>
